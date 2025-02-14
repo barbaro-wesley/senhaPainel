@@ -1,0 +1,53 @@
+// Definição do banco PostgreSQL
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Tabela de usuários (recepcionistas)
+model Usuario {
+  id        String  @id @default(uuid())
+  nome      String
+  email     String  @unique
+  senha     String
+  setorId   Int
+  setor     Setor   @relation(fields: [setorId], references: [id])
+  guicheId  Int
+  guiche    Guiche  @relation(fields: [guicheId], references: [id])
+}
+
+// Tabela de setores (Laboratório, Diagnóstico, Consultas)
+model Setor {
+  id       Int      @id @default(autoincrement())
+  nome     String   @unique
+  guiches  Guiche[]
+  usuarios Usuario[]
+  senhas   Senha[]  // Relacionamento inverso para Senha
+}
+
+// Tabela de guichês (1,2,3,4,5,6,7) vinculados a setores
+model Guiche {
+  id      Int    @id @default(autoincrement())
+  numero  Int
+  setorId Int
+  setor   Setor  @relation(fields: [setorId], references: [id])
+  senhas  Senha[] // Relacionamento inverso para Senha
+  usuarios  Usuario[]
+}
+
+// Tabela de senhas geradas
+model Senha {
+  id         Int      @id @default(autoincrement())
+  numero     Int
+  tipo       String   // "Normal" ou "Preferencial"
+  setorId    Int
+  setor      Setor    @relation(fields: [setorId], references: [id], onDelete: Cascade)
+  guicheId   Int?
+  guiche     Guiche?  @relation(fields: [guicheId], references: [id], onDelete: SetNull)
+  chamada    Boolean  @default(false) // Indica se a senha já foi chamada
+  createdAt  DateTime @default(now())
+}
