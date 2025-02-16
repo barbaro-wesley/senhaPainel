@@ -3,11 +3,12 @@ import { Typography, Button, Box } from "@mui/material";
 import { styled } from "@mui/system";
 import api from "../services/api";
 import logo from "../assets/logo.png";
+import { io } from "socket.io-client";
 
 const setores = [
-  { nome: "Laboratório", cor: "#00509E" },
-  { nome: "Diagnóstico", cor: "#003F7D" },
-  { nome: "Consultas", cor: "#002B5B" }
+  { id: 1, nome: "Laboratório", cor: "#00509E" },
+  { id: 2, nome: "Diagnóstico", cor: "#003F7D" },
+  { id: 3, nome: "Consultas", cor: "#002B5B" }
 ];
 
 const Fundo = styled(Box)({
@@ -36,12 +37,12 @@ const AnimacaoFundo = styled(Box)({
   "& div": {
     position: "absolute",
     background: "rgba(255, 255, 255, 0.1)",
-    animation: "aparecerDesaparecer 5s infinite ease-in-out",
+    animation: "aparecerDesaparecer 3s infinite ease-in-out",
   },
   "@keyframes aparecerDesaparecer": {
-    "0%": { opacity: 0, transform: "scale(0.5)" },
-    "50%": { opacity: 1, transform: "scale(1)" },
-    "100%": { opacity: 0, transform: "scale(0.5)" },
+    "0%": { opacity: 0 },
+    "50%": { opacity: 1 },
+    "100%": { opacity: 0 },
   }
 });
 
@@ -68,41 +69,79 @@ const Totem = () => {
   const [setorSelecionado, setSetorSelecionado] = useState(null);
   const [senhaGerada, setSenhaGerada] = useState(null);
   const [formas, setFormas] = useState([]);
+  const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    const formasGeometricas = [];
-    for (let i = 0; i < 20; i++) {
-      const tipo = Math.floor(Math.random() * 3); // 0: círculo, 1: quadrado, 2: triângulo
-      const tamanho = Math.random() * 100 + 50; // Tamanho entre 50px e 150px
-      const top = Math.random() * 100 + "vh";
-      const left = Math.random() * 100 + "vw";
-      const animationDelay = Math.random() * 5 + "s";
+    const novasFormas = [];
+    for (let i = 0; i < 10; i++) {
+      novasFormas.push({
+        top: Math.random() * 100 + "vh",
+        left: Math.random() * 100 + "vw",
+        width: Math.random() * 100 + 50 + "px",
+        height: "2px",
+        animationDelay: Math.random() * 5 + "s"
+      });
 
-      formasGeometricas.push({
-        tipo,
-        top,
-        left,
-        width: tamanho + "px",
-        height: tamanho + "px",
-        animationDelay,
+      novasFormas.push({
+        top: Math.random() * 100 + "vh",
+        left: Math.random() * 100 + "vw",
+        width: "2px",
+        height: Math.random() * 100 + 50 + "px",
+        animationDelay: Math.random() * 5 + "s"
       });
     }
-    setFormas(formasGeometricas);
+    setFormas(novasFormas);
+
+    const newSocket = io("http://localhost:5000");
+    setSocket(newSocket);
+
+    return () => newSocket.close();
   }, []);
+
+  useEffect(() => {
+    if (senhaGerada) {
+      const timer = setTimeout(() => {
+        setSenhaGerada(null); // Remove a senha da tela após 10 segundos
+      }, 10000); // 10 segundos
+
+      return () => clearTimeout(timer);
+    }
+  }, [senhaGerada]);
 
   const selecionarSetor = (setor) => {
     setSetorSelecionado(setor);
     setEtapa("tipo");
   };
 
+  const imprimirSenha = async (senha) => {
+    try {
+      const response = await api.post("/imprimir-senha", {
+        numero: senha.numero,
+        setor: setorSelecionado.nome,
+        tipo: senha.tipo,
+      });
+
+      if (response.data.message === "Senha impressa com sucesso") {
+        console.log("Senha impressa com sucesso");
+      }
+    } catch (error) {
+      console.error("Erro ao imprimir senha:", error);
+    }
+  };
+
   const gerarSenha = async (prioridade) => {
     try {
       const response = await api.post("/senhas/gerar", {
-        setor: setorSelecionado,
-        prioridade,
+        setorId: setorSelecionado.id,
+        tipo: prioridade,
       });
       setSenhaGerada(response.data);
       falarSenha(response.data.numero);
+      await imprimirSenha(response.data);
+
+      if (socket) {
+        socket.emit("novaSenha", response.data);
+      }
       setEtapa("setor");
     } catch (error) {
       console.error("Erro ao gerar senha", error);
@@ -127,8 +166,6 @@ const Totem = () => {
               width: forma.width,
               height: forma.height,
               animationDelay: forma.animationDelay,
-              borderRadius: forma.tipo === 0 ? "50%" : forma.tipo === 1 ? "0%" : "0%", // Círculo ou quadrado
-              clipPath: forma.tipo === 2 ? "polygon(50% 0%, 0% 100%, 100% 100%)" : "none", // Triângulo
             }}
           />
         ))}
@@ -141,7 +178,9 @@ const Totem = () => {
         <>
           <Typography variant="h5" gutterBottom color="white">Escolha um setor de atendimento</Typography>
           {setores.map((setor) => (
-            <BotaoSetor key={setor.nome} onClick={() => selecionarSetor(setor.nome)}>{setor.nome}</BotaoSetor>
+            <BotaoSetor key={setor.nome} onClick={() => selecionarSetor(setor)}>
+              {setor.nome}
+            </BotaoSetor>
           ))}
         </>
       )}

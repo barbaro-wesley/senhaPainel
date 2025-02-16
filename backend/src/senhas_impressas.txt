@@ -1,0 +1,4 @@
+Senha: LP008
+Setor: Laboratório
+Tipo: Prioritário
+

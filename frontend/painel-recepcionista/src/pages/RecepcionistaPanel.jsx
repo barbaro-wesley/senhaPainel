@@ -15,6 +15,16 @@ const PainelRecepcao = () => {
   useEffect(() => {
     carregarSenhas();
     socket.on("senhaAtualizada", carregarSenhas);
+  
+    // Ouvir novas senhas geradas pelo Totem
+    socket.on("novaSenha", (novaSenha) => {
+      setSenhas((prevSenhas) => [...prevSenhas, novaSenha]);
+    });
+  
+    return () => {
+      socket.off("senhaAtualizada");
+      socket.off("novaSenha");
+    };
   }, []);
 
   const carregarSenhas = async () => {

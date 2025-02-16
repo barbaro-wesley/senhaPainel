@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Senha" ALTER COLUMN "numero" SET DATA TYPE TEXT;

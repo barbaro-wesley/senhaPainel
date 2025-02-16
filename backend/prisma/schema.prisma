@@ -42,7 +42,7 @@ model Guiche {
 // Tabela de senhas geradas
 model Senha {
   id         Int      @id @default(autoincrement())
-  numero     Int
+  numero     String   // Alterado para String
   tipo       String   // "Normal" ou "Preferencial"
   setorId    Int
   setor      Setor    @relation(fields: [setorId], references: [id], onDelete: Cascade)
