@@ -122,13 +122,26 @@ const PainelRecepcao = () => {
 
   const chamarSenha = async (senha) => {
     try {
-      const response = await api.post("/senhas/chamar", { id: senha.id });
+      const token = localStorage.getItem("token"); // Obtém o token do localStorage
+      console.log("Token enviado:", token); // Debug
+
+      if (!token) {
+        throw new Error("Token não encontrado no localStorage");
+      }
+
+      const response = await api.post(
+        "/senhas/chamar",
+        { id: senha.id }, // Corpo da requisição
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // Envia o token no cabeçalho
+          },
+        }
+      );
+
+      console.log("Resposta da API:", response.data); // Debug
       setUltimaChamada(response.data);
-      setHistoricoChamadas((prev) => [response.data, ...prev].slice(0, 5));
-      setSenhas((prevSenhas) => {
-        const novasSenhas = prevSenhas.filter((s) => s.id !== response.data.id);
-        return ordenarSenhas(novasSenhas);
-      });
+      socket.emit("senhaChamada", response.data); // Emitir evento de senha chamada
     } catch (error) {
       console.error("Erro ao chamar senha:", error);
     }

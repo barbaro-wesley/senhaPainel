@@ -31,3 +31,10 @@ const server = app.listen(PORT, () => {
 
 // Inicializa o socket.io
 initialize(server);
+app.use(
+  cors({
+    origin: "http://localhost:5173", // Substitua pela origem do seu frontend
+    methods: "GET,POST,PUT,DELETE",
+    allowedHeaders: "Content-Type,Authorization", // Permite o cabeçalho Authorization
+  })
+);

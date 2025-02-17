@@ -13,9 +13,10 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
+        <Route path="/totem" element={<Totem />} />
         <Route path="/login" element={<Navigate to="/" />} />
         <Route path="/recepcionista" element={<Recepcionista />} />
-        <Route path="/totem" element={<Totem />} />
+        
         <Route path="/painel" element={<PainelChamada />} /> 
         <Route path="*" element={<Navigate to="/" />} /> {/* Redireciona rotas inválidas */}
       </Routes>

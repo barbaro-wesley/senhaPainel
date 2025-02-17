@@ -25,6 +25,7 @@ exports.register = async (req, res) => {
 // Login de usuário
 exports.login = async (req, res) => {
   const { email, senha } = req.body;
+
   try {
     const usuario = await prisma.usuario.findUnique({ where: { email } });
     if (!usuario) return res.status(401).json({ error: "Usuário não encontrado" });
@@ -32,9 +33,16 @@ exports.login = async (req, res) => {
     const senhaValida = await bcrypt.compare(senha, usuario.senha);
     if (!senhaValida) return res.status(401).json({ error: "Senha incorreta" });
 
-    const token = jwt.sign({ id: usuario.id, setorId: usuario.setorId }, authConfig.secret, {
-      expiresIn: "8h",
-    });
+    // Gera o token JWT com setorId e guicheId
+    const token = jwt.sign(
+      {
+        id: usuario.id,
+        setorId: usuario.setorId, // Inclui o setorId no token
+        guicheId: usuario.guicheId, // Inclui o guicheId no token
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "8h" }
+    );
 
     res.json({ message: "Login bem-sucedido", token, usuario });
   } catch (error) {

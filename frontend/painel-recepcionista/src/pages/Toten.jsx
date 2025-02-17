@@ -131,14 +131,16 @@ const Totem = () => {
 
   const gerarSenha = async (prioridade) => {
     try {
+      console.log("Tentando gerar senha para setor:", setorSelecionado.id, "tipo:", prioridade); // Debug
       const response = await api.post("/senhas/gerar", {
         setorId: setorSelecionado.id,
         tipo: prioridade,
       });
+      console.log("Resposta da API:", response.data); // Debug
       setSenhaGerada(response.data);
       falarSenha(response.data.numero);
       await imprimirSenha(response.data);
-
+  
       if (socket) {
         socket.emit("novaSenha", response.data);
       }

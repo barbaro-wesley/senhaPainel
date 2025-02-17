@@ -52,40 +52,52 @@ exports.gerarSenha = async (req, res) => {
   }
 };
 
-const chamarSenha = async (req, res) => {
-  const { id } = req.body; // Recebe o ID da senha no corpo da requisição
+exports.chamarSenha = async (req, res) => {
+  console.log("Dados do usuário:", req.user); // Debug
+
+  const { guicheId } = req.user; // Obtém o guicheId do usuário logado
+  const { id } = req.body; // ID da senha
+
   try {
     const senha = await prisma.senha.update({
       where: { id: parseInt(id) },
-      data: { chamada: true, guicheId: req.user.guicheId }, // Atualiza a senha como chamada e associa ao guichê
+      data: {
+        chamada: true, // Marca a senha como chamada
+        guicheId: guicheId, // Associa ao guichê do usuário logado
+      },
     });
 
-    // Emite o evento de senha chamada
-    const io = getIo(); // Obtém a instância do socket.io
-    io.emit("senhaChamada", senha); // Emite a senha chamada para todos os clientes
+    console.log("Senha atualizada:", senha); // Debug
+
+    // Emite o evento de senha chamada via Socket.io
+    const io = getIo();
+    io.emit("senhaChamada", senha);
 
     res.json(senha);
   } catch (error) {
-    res.status(500).json({ message: "Erro ao chamar senha" });
+    console.error("Erro ao chamar senha:", error);
+    res.status(500).json({ message: "Erro ao chamar senha", error: error.message });
   }
 };
 
 exports.listarPendentes = async (req, res) => {
-  const { setorId } = req.user;
+  const { setorId } = req.user; // Obtém o setorId do usuário logado
 
   try {
     const senhas = await prisma.senha.findMany({
       where: {
-        chamada: false,
-        setorId: setorId,
+        chamada: false, // Apenas senhas não chamadas
+        setorId: setorId, // Filtra pelo setor do usuário logado
       },
       orderBy: [
-        { tipo: { sort: "desc", nulls: "last" } }, // Garantir prioridade das prioritárias
-        { createdAt: "asc" }
+        { tipo: "desc" }, // Prioriza senhas prioritárias
+        { createdAt: "asc" }, // Ordena pela data de criação
       ],
     });
+
     res.json(senhas);
   } catch (error) {
+    console.error("Erro ao listar senhas pendentes:", error);
     res.status(500).json({ message: "Erro ao listar senhas pendentes" });
   }
 };
