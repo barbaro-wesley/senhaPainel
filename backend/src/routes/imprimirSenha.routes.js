@@ -1,7 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const imprimirSenhaController = require("../controllers/imprimirSenha.controller");
-
-router.post("/", imprimirSenhaController.imprimirSenha);
+const {imprimirSenha} = require("../controllers/imprimirSenha.controller.js");
+router.post("/imprimir-senha", imprimirSenha);
 
 module.exports = router;

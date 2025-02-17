@@ -14,22 +14,22 @@ const Login = () => {
       setError("Preencha todos os campos.");
       return;
     }
-
+  
     try {
       const response = await axios.post("http://localhost:5000/api/usuarios/login", {
         email,
         senha,
       });
-
+  
       const { token, usuario } = response.data;
-
-      // Salvar o token no localStorage (ou sessionStorage, se preferir)
-      localStorage.setItem("token", token); // Alterado para localStorage
-      localStorage.setItem("usuario", JSON.stringify(usuario)); // Alterado para localStorage
-
+  
+      // Salvar o token e o usuário no localStorage
+      localStorage.setItem("token", token);
+      localStorage.setItem("usuario", JSON.stringify(usuario)); // Inclui o setorId
+  
       // Configurar o Axios para enviar o token no cabeçalho das requisições
       axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-
+  
       // Redirecionar para o painel do recepcionista
       navigate("/recepcionista");
     } catch (error) {

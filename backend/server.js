@@ -15,6 +15,7 @@ const setorRoutes = require("./src/routes/setor.routes");
 const guicheRoutes = require("./src/routes/guiche.routes");
 const senhaRoutes = require("./src/routes/senha.routes");
 const usuarioRoutes = require("./src/routes/usuarios.routes");
+const imprimirSenhaRoute = require("./src/routes/imprimirSenha.routes");
 
 // Registro das rotas na aplicação
 app.use("/api/auth", authRoutes);
@@ -22,7 +23,7 @@ app.use("/api/setores", setorRoutes);
 app.use("/api/guiches", guicheRoutes);
 app.use("/api/senhas", senhaRoutes);
 app.use("/api/usuarios", usuarioRoutes);
-
+app.use("/api/imprimir-senha", imprimirSenhaRoute);
 // Inicia o servidor
 const PORT = process.env.PORT || 5000;
 const server = app.listen(PORT, () => {

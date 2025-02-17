@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Typography, Box, List, ListItem, ListItemText, styled } from "@mui/material";
+import { Typography, Box, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, styled } from "@mui/material";
 import io from "socket.io-client";
 
 const Fundo = styled(Box)({
@@ -9,7 +9,7 @@ const Fundo = styled(Box)({
   flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
-  background: "#001B3A", // Fundo azul escuro
+  background: "#001B3A",
   position: "fixed",
   top: 0,
   left: 0,
@@ -19,44 +19,71 @@ const Fundo = styled(Box)({
 });
 
 const PainelChamada = () => {
-  const [senhaAtual, setSenhaAtual] = useState(null); // Senha chamada no momento
-  const [historico, setHistorico] = useState([]); // Histórico de senhas chamadas
-  const [socket, setSocket] = useState(null); // Conexão com o socket.io
+  const [senhaAtual, setSenhaAtual] = useState(null);
+  const [historico, setHistorico] = useState([]);
+  const [socket, setSocket] = useState(null);
 
-  // Efeito para conectar ao socket.io
   useEffect(() => {
-    const newSocket = io("http://localhost:5000"); // Conecta ao servidor socket.io
+    const newSocket = io("http://localhost:5000");
     setSocket(newSocket);
 
-    // Recebe atualizações de senhas chamadas
     newSocket.on("senhaChamada", (senha) => {
-      console.log("Senha recebida:", senha); // Depuração
-      setSenhaAtual(senha); // Atualiza a senha atual
-      setHistorico((prev) => [senha, ...prev].slice(0, 5)); // Adiciona ao histórico (limite de 5)
-      falarSenha(senha); // Anuncia a senha por voz
+      setSenhaAtual(senha);
+      setHistorico((prev) => [senha, ...prev].slice(0, 5));
+      falarSenha(senha);
     });
 
-    // Limpeza ao desmontar o componente
     return () => newSocket.close();
   }, []);
 
-  // Função para anunciar a senha por voz
   const falarSenha = (senha) => {
     const synth = window.speechSynthesis;
+  
+    // Verifica se a API está disponível
+    if (!synth) {
+      console.error("API de síntese de voz não suportada.");
+      return;
+    }
+  
+    // Cria a instância do SpeechSynthesisUtterance
     const utterance = new SpeechSynthesisUtterance(
       `Senha ${senha.numero}, dirija-se ao guichê ${senha.guicheId}`
     );
+  
+    // Configura a voz (opcional)
+    const voices = synth.getVoices();
+    if (voices.length > 0) {
+      utterance.voice = voices[0]; // Use a primeira voz disponível
+    }
+  
+    // Configura o volume, taxa e tom (opcional)
+    utterance.volume = 1; // Volume máximo (0 a 1)
+    utterance.rate = 1; // Velocidade normal (0.1 a 10)
+    utterance.pitch = 1; // Tom normal (0 a 2)
+  
+    // Fala a senha
     synth.speak(utterance);
+  
+    // Logs para depuração
+    utterance.onstart = () => {
+      console.log("Iniciando fala...");
+    };
+  
+    utterance.onend = () => {
+      console.log("Fala concluída.");
+    };
+  
+    utterance.onerror = (error) => {
+      console.error("Erro ao falar:", error);
+    };
   };
 
   return (
     <Fundo>
-      {/* Título do painel */}
       <Typography variant="h3" gutterBottom style={{ color: "#fff", fontWeight: "bold" }}>
         Painel de Chamada
       </Typography>
 
-      {/* Exibição da senha atual */}
       {senhaAtual && (
         <Box
           style={{
@@ -75,29 +102,28 @@ const PainelChamada = () => {
         </Box>
       )}
 
-      {/* Histórico de senhas chamadas */}
       <Typography variant="h5" style={{ color: "#fff", marginBottom: "10px" }}>
         Histórico de Chamadas:
       </Typography>
-      <List style={{ width: "100%", maxWidth: "400px" }}>
-        {historico.map((senha, index) => (
-          <ListItem
-            key={index}
-            style={{
-              background: "rgba(255, 255, 255, 0.1)",
-              color: "#fff",
-              marginBottom: "10px",
-              borderRadius: "5px",
-            }}
-          >
-            <ListItemText
-              primary={`Senha: ${senha.numero}`}
-              secondary={`Guichê: ${senha.guicheId}`}
-              style={{ fontSize: "1.2em" }}
-            />
-          </ListItem>
-        ))}
-      </List>
+
+      <TableContainer component={Paper} style={{ maxWidth: "600px", margin: "0 auto" }}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell style={{ fontWeight: "bold", color: "#001B3A" }}>Senha</TableCell>
+              <TableCell style={{ fontWeight: "bold", color: "#001B3A" }}>Guichê</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {historico.map((senha, index) => (
+              <TableRow key={index}>
+                <TableCell style={{ color: "#001B3A" }}>{senha.numero}</TableCell>
+                <TableCell style={{ color: "#001B3A" }}>{senha.guicheId}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Fundo>
   );
 };

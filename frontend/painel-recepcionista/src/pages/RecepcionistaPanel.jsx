@@ -111,10 +111,26 @@ const PainelRecepcao = () => {
 
   const carregarSenhas = async () => {
     try {
-      const response = await api.get("/senhas/pendentes");
-      const senhasOrdenadas = ordenarSenhas(response.data);
+      const usuario = JSON.parse(localStorage.getItem("usuario")); // Obtém os dados do usuário logado
+      if (!usuario || !usuario.setorId) {
+        console.error("Erro: Setor do usuário não encontrado no localStorage.");
+        return;
+      }
+  
+      console.log("Usuário logado:", usuario); // 🔍 Depuração para ver setorId
+  
+      const response = await api.get("/senhas/pendentes", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }, // 🔥 Garante envio do token
+      });
+  
+      console.log("Senhas recebidas da API:", response.data); // 🔍 Verifica se a API retorna as senhas certas
+  
+      // Filtra as senhas pelo setorId do usuário logado
+      const senhasDoSetor = response.data.filter(senha => senha.setorId === usuario.setorId);
+      console.log("Senhas filtradas no frontend:", senhasDoSetor); // 🔍 Depuração
+  
+      const senhasOrdenadas = ordenarSenhas(senhasDoSetor);
       setSenhas(senhasOrdenadas);
-      console.log("Senhas carregadas e ordenadas:", senhasOrdenadas); // Depuração
     } catch (error) {
       console.error("Erro ao carregar senhas:", error);
     }
@@ -124,11 +140,11 @@ const PainelRecepcao = () => {
     try {
       const token = localStorage.getItem("token"); // Obtém o token do localStorage
       console.log("Token enviado:", token); // Debug
-
+  
       if (!token) {
         throw new Error("Token não encontrado no localStorage");
       }
-
+  
       const response = await api.post(
         "/senhas/chamar",
         { id: senha.id }, // Corpo da requisição
@@ -138,9 +154,16 @@ const PainelRecepcao = () => {
           },
         }
       );
-
+  
       console.log("Resposta da API:", response.data); // Debug
       setUltimaChamada(response.data);
+  
+      // Atualiza o histórico de chamadas com a senha chamada
+      setHistoricoChamadas((prev) => [response.data, ...prev].slice(0, 5));
+  
+      // Remove a senha chamada da lista de senhas pendentes
+      setSenhas((prevSenhas) => prevSenhas.filter((s) => s.id !== senha.id));
+  
       socket.emit("senhaChamada", response.data); // Emitir evento de senha chamada
     } catch (error) {
       console.error("Erro ao chamar senha:", error);

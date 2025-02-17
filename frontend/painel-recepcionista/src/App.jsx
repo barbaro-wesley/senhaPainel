@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 
 import Login from "./pages/Login";
 import Recepcionista from "./pages/RecepcionistaPanel";
-import Totem from "./pages/Toten";
+import Toten from "./pages/Toten";
 import PainelChamada from "./pages/PainelChamada";
 
 
@@ -13,10 +13,9 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
-        <Route path="/totem" element={<Totem />} />
+        <Route path="/toten" element={<Toten />} />
         <Route path="/login" element={<Navigate to="/" />} />
         <Route path="/recepcionista" element={<Recepcionista />} />
-        
         <Route path="/painel" element={<PainelChamada />} /> 
         <Route path="*" element={<Navigate to="/" />} /> {/* Redireciona rotas inválidas */}
       </Routes>

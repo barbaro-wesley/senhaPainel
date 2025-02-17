@@ -6,6 +6,7 @@ exports.gerarSenha = async (req, res) => {
 
   // Garantir que o tipo seja "Prioritario" ou "Normal"
   const tipoFormatado = tipo === "Prioritario" ? "Prioritario" : "Normal";
+  
 
   try {
     // Busca o setor para obter o nome
@@ -20,8 +21,8 @@ exports.gerarSenha = async (req, res) => {
     // Obtém a primeira letra do setor
     const primeiraLetraSetor = setor.nome.charAt(0).toUpperCase();
 
-    // Obtém a primeira letra do tipo (Normal ou Prioritário)
-    const primeiraLetraTipo = tipoFormatado.charAt(0).toUpperCase();
+    // Define a primeira letra do tipo (P para Prioritário, N para Normal)
+    const primeiraLetraTipo = tipoFormatado === "Prioritario" ? "P" : "N";
 
     // Conta o número de senhas já geradas para o setor
     const totalSenhas = await prisma.senha.count({ where: { setorId } });
@@ -29,7 +30,7 @@ exports.gerarSenha = async (req, res) => {
     // Formata o número da senha com zeros à esquerda (ex: 001, 002, etc.)
     const numeroSenha = String(totalSenhas + 1).padStart(3, "0");
 
-    // Cria a senha no formato desejado (ex: LN001, DP002, etc.)
+    // Cria a senha no formato desejado (ex: LP001, LN002, etc.)
     const numeroSenhaFormatado = `${primeiraLetraSetor}${primeiraLetraTipo}${numeroSenha}`;
 
     // Cria a senha no banco de dados
@@ -81,13 +82,18 @@ exports.chamarSenha = async (req, res) => {
 };
 
 exports.listarPendentes = async (req, res) => {
+  console.log("Usuário logado:", req.user); // 🔍 Verifica se req.user está correto
+
   const { setorId } = req.user; // Obtém o setorId do usuário logado
+  if (!setorId) {
+    return res.status(400).json({ message: "Setor não encontrado no token." });
+  }
 
   try {
     const senhas = await prisma.senha.findMany({
       where: {
         chamada: false, // Apenas senhas não chamadas
-        setorId: setorId, // Filtra pelo setor do usuário logado
+        setorId: Number(setorId), // 🔥 Converte para número e filtra corretamente
       },
       orderBy: [
         { tipo: "desc" }, // Prioriza senhas prioritárias
@@ -95,13 +101,13 @@ exports.listarPendentes = async (req, res) => {
       ],
     });
 
+    console.log("Senhas retornadas:", senhas); // 🔍 Depuração
     res.json(senhas);
   } catch (error) {
     console.error("Erro ao listar senhas pendentes:", error);
     res.status(500).json({ message: "Erro ao listar senhas pendentes" });
   }
 };
-
 exports.marcarDesistencia = async (req, res) => {
   const { id } = req.body;
   try {

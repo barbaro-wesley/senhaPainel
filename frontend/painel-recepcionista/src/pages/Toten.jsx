@@ -64,7 +64,7 @@ const BotaoSetor = styled(Button)({
   },
 });
 
-const Totem = () => {
+const Toten = () => {
   const [etapa, setEtapa] = useState("setor");
   const [setorSelecionado, setSetorSelecionado] = useState(null);
   const [senhaGerada, setSenhaGerada] = useState(null);
@@ -115,12 +115,12 @@ const Totem = () => {
 
   const imprimirSenha = async (senha) => {
     try {
-      const response = await api.post("/imprimir-senha", {
+      const response = await api.post("http://localhost:5000/api/imprimir-senha/imprimir-senha", {
         numero: senha.numero,
         setor: setorSelecionado.nome,
         tipo: senha.tipo,
       });
-
+  
       if (response.data.message === "Senha impressa com sucesso") {
         console.log("Senha impressa com sucesso");
       }
@@ -128,14 +128,20 @@ const Totem = () => {
       console.error("Erro ao imprimir senha:", error);
     }
   };
+  
 
   const gerarSenha = async (prioridade) => {
     try {
       console.log("Tentando gerar senha para setor:", setorSelecionado.id, "tipo:", prioridade); // Debug
+  
+      // Corrigindo o valor do tipo para "Prioritario" (sem acento)
+      const tipoFormatado = prioridade === "Prioritário" ? "Prioritario" : "Normal";
+  
       const response = await api.post("/senhas/gerar", {
         setorId: setorSelecionado.id,
-        tipo: prioridade,
+        tipo: tipoFormatado, // Usando o tipo formatado
       });
+  
       console.log("Resposta da API:", response.data); // Debug
       setSenhaGerada(response.data);
       falarSenha(response.data.numero);
@@ -190,8 +196,8 @@ const Totem = () => {
       {etapa === "tipo" && (
         <>
           <Typography variant="h5" gutterBottom color="white">Escolha o tipo de atendimento</Typography>
-          <BotaoSetor onClick={() => gerarSenha("Normal")} style={{ backgroundColor: "#00509E" }}>Normal</BotaoSetor>
-          <BotaoSetor onClick={() => gerarSenha("Prioritário")} style={{ backgroundColor: "#0084FF" }}>Prioritário</BotaoSetor>
+          <BotaoSetor onClick={() => gerarSenha("Normal")} style={{ backgroundColor: "#00509E" }}>Convencional</BotaoSetor>
+          <BotaoSetor onClick={() => gerarSenha("Prioritário")} style={{ backgroundColor: "#0084FF" }}>Preferencial</BotaoSetor>
         </>
       )}
 
@@ -204,4 +210,4 @@ const Totem = () => {
   );
 };
 
-export default Totem;
+export default Toten;
